@@ -34,7 +34,7 @@ class Operations:
         with open(self.bash_file, 'r') as f:
             for line in f.readlines():
                 if line.startswith("alias"):
-                    cmdline = line.replace("alias", "").strip()
+                    cmdline = line.replace("alias", "", 1).strip()
                     aliases.append(cmdline)
         return  aliases
 
@@ -42,8 +42,7 @@ class Operations:
     def print_aliases(self):
         i = 0
         for line in self.aliaslist():
-            cmdline = line.replace("alias", "").strip()
-            print "[" + str(i) + "] " + cmdline
+            print "[" + str(i) + "] " + line
             i += 1
 
     def setup(self):
@@ -52,8 +51,10 @@ class Operations:
         script = os.path.realpath(__file__)
         script_name = __file__
         newpath = os.path.join(setup_dir, script_name)
-        if not os.path.exists(setup_dir):
-            os.mkdir(setup_dir)
+
+        if not os.path.exists(setup_dir): os.mkdir(setup_dir)
+        if os.path.isfile(newpath): os.remove(newpath)
+
         shutil.copyfile(script, newpath)
         self.add_alias("addalias", "python " + newpath)
         print "\tnow you can use 'addalias -parameters'"
