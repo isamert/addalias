@@ -8,6 +8,9 @@ from PyQt4 import QtGui, QtCore
 class Operations:
     def __init__(self):
         self.bash_file = os.path.expanduser("~/.bashrc")
+        self.path = os.path.realpath(__file__)
+        self.install_dir = os.path.expanduser("~/.local/share/addalias")
+        self.install_path = os.path.join(self.install_dir, __file__)
 
     def add_alias(self, alias, command):
         with open(self.bash_file, 'a') as f:
@@ -45,22 +48,24 @@ class Operations:
             print "[" + str(i) + "] " + line
             i += 1
 
-    def setup(self):
+    def install(self):
         import shutil
-        setup_dir = os.path.expanduser("~/.local/share/addalias")
-        script = os.path.realpath(__file__)
-        script_name = __file__
-        newpath = os.path.join(setup_dir, script_name)
 
-        if not os.path.exists(setup_dir): os.mkdir(setup_dir)
-        if os.path.isfile(newpath): os.remove(newpath)
+        if not os.path.exists(self.install_dir): os.mkdir(self.install_dir)
+        if os.path.isfile(self.install_path): os.remove(self.install_path)
 
-        shutil.copyfile(script, newpath)
-        self.add_alias("addalias", "python " + newpath)
+        shutil.copyfile(self.path, self.install_path)
+        self.add_alias("addalias", "python " + self.install_path)
         print "\tnow you can use 'addalias -parameters'"
         print "\tbefore using you have to close this terminal window and reopen"
         print "\tfor example"
         print '\t\taddalias -add "my-alias" "my-command"'
+
+    def uninstall(self):
+        self.delete("addalias")
+        os.remove(self.install_path)
+        os.rmdir(self.install_dir)
+        print "success!"
 
 
 
@@ -176,7 +181,8 @@ def main():
             print '\t\tremove alias:    python addalias.py -rm "<title>"'
             print '\t\tlist aliases:    python addalias.py -list'
             print '\t\topen gui:        python addalias.py -gui'
-            print '\t\tsetup:           python addalias.py --install'
+            print '\t\tinstall:         python addalias.py --install'
+            print '\t\tuninstall:       addalias --uninstall'
             print ""
             print "\t\texample:"
             print '\t\t\tpython addalias.py -add "myalias" "my-real-command"'
@@ -194,11 +200,10 @@ def main():
             sys.exit(app.exec_())
 
         elif argv[1] == "--install":
-            operations.setup()
+            operations.install()
 
         elif argv[1] == "--uninstall":
-            #TODO: uninstall
-            pass
+            operations.uninstall()
 
         else:
             print 'wrong usage, try typing --help'
