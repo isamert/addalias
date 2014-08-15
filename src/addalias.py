@@ -5,6 +5,9 @@ import os
 import sys
 from PyQt4 import QtGui, QtCore
 
+ERR_SAME = "You have same alias, try different."
+SUCCESS = "Success!"
+
 class Operations:
     def __init__(self):
         self.bash_file = os.path.expanduser("~/.bashrc")
@@ -12,10 +15,25 @@ class Operations:
         self.install_dir = os.path.expanduser("~/.local/share/addalias")
         self.install_path = os.path.join(self.install_dir, __file__)
 
+    def check(self, lines, alias):
+        for line in lines:
+            if line.startswith("alias " + alias + "="):
+                return False
+        return True
+
     def add_alias(self, alias, command):
-        with open(self.bash_file, 'a') as f:
-            f.write("alias %s='%s'\n" % (alias, command))
-        print "success!"
+        with open(self.bash_file, 'a+') as f:
+            if self.check(f.readlines(), alias):
+                txt = ""
+                if str(command).startswith("'") and str(command).endswith("'"):
+                    txt = "alias %s=%s\n" % (alias, command)
+                else:
+                    txt = "alias %s='%s'\n" % (alias, command)
+                f.write(txt)
+                print SUCCESS
+                return True
+            else:
+                return False
 
     def delete(self, alias):
         #TODO: delete by id
@@ -26,11 +44,11 @@ class Operations:
         f = open(self.bash_file,"w")
 
         for line in lines:
-            if line.startswith("alias " + alias + "=") == False:
+            if not line.startswith("alias " + alias + "="):
                 f.write(line)
 
         f.close()
-        print "success!"
+        print SUCCESS
 
     def aliaslist(self):
         aliases = []
@@ -65,11 +83,41 @@ class Operations:
         self.delete("addalias")
         os.remove(self.install_path)
         os.rmdir(self.install_dir)
-        print "success!"
+        print SUCCESS
 
 
 
 operations = Operations()
+
+
+class AddEditAlias(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(AddEditAlias, self).__init__(parent)
+        self.old_alias = None
+
+        self.setWindowTitle("Edit Alias")
+        self.gridLayout = QtGui.QGridLayout(self)
+        self.buttons_addalias = QtGui.QDialogButtonBox(self)
+        self.buttons_addalias.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.gridLayout.addWidget(self.buttons_addalias, 3, 0, 1, 1)
+        self.layout_addalias = QtGui.QFormLayout()
+        self.layout_addalias.setFieldGrowthPolicy(QtGui.QFormLayout.AllNonFixedFieldsGrow)
+        self.lbl_command = QtGui.QLabel(self)
+        self.layout_addalias.setWidget(1, QtGui.QFormLayout.LabelRole, self.lbl_command)
+        self.lbl_alias = QtGui.QLabel(self)
+        self.layout_addalias.setWidget(0, QtGui.QFormLayout.LabelRole, self.lbl_alias)
+        self.line_alias = QtGui.QLineEdit(self)
+        self.layout_addalias.setWidget(0, QtGui.QFormLayout.FieldRole, self.line_alias)
+        self.line_command = QtGui.QLineEdit(self)
+        self.layout_addalias.setWidget(1, QtGui.QFormLayout.FieldRole, self.line_command)
+        self.gridLayout.addLayout(self.layout_addalias, 1, 0, 1, 1)
+        self.line_1 = QtGui.QFrame(self)
+        self.line_1.setFrameShape(QtGui.QFrame.HLine)
+        self.line_1.setFrameShadow(QtGui.QFrame.Sunken)
+        self.gridLayout.addWidget(self.line_1, 2, 0, 1, 1)
+
+        self.lbl_alias.setText("Alias:")
+        self.lbl_command.setText("Command:")
 
 
 class GUI(QtGui.QMainWindow):
@@ -78,9 +126,14 @@ class GUI(QtGui.QMainWindow):
         self.setWindowTitle("Add alias")
         self.load_tabwidget()
         self.setCentralWidget(self.tabwidget)
+        self.load_windowedit()
         self.load_list()
         self.show()
 
+    def load_windowedit(self):
+        self.window_edit = AddEditAlias()
+        self.connect(self.window_edit.buttons_addalias, QtCore.SIGNAL("accepted()"), self.alias_edit_ok)
+        self.connect(self.window_edit.buttons_addalias, QtCore.SIGNAL("rejected()"), self.window_edit.hide)
 
     def load_tabwidget(self):
         self.tabwidget = QtGui.QTabWidget()
@@ -91,32 +144,10 @@ class GUI(QtGui.QMainWindow):
         self.tabwidget.addTab(self.tab_alias, "Edit Aliases")
 
     def load_tabaddalias(self):
-        self.tab_addalias = QtGui.QWidget()
-        self.gridLayout = QtGui.QGridLayout(self.tab_addalias)
-        self.buttons_addalias = QtGui.QDialogButtonBox(self.tab_addalias)
-        self.buttons_addalias.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
-        self.gridLayout.addWidget(self.buttons_addalias, 3, 0, 1, 1)
-        self.layout_addalias = QtGui.QFormLayout()
-        self.layout_addalias.setFieldGrowthPolicy(QtGui.QFormLayout.AllNonFixedFieldsGrow)
-        self.lbl_command = QtGui.QLabel(self.tab_addalias)
-        self.layout_addalias.setWidget(1, QtGui.QFormLayout.LabelRole, self.lbl_command)
-        self.lbl_alias = QtGui.QLabel(self.tab_addalias)
-        self.layout_addalias.setWidget(0, QtGui.QFormLayout.LabelRole, self.lbl_alias)
-        self.line_alias = QtGui.QLineEdit(self.tab_addalias)
-        self.layout_addalias.setWidget(0, QtGui.QFormLayout.FieldRole, self.line_alias)
-        self.line_command = QtGui.QLineEdit(self.tab_addalias)
-        self.layout_addalias.setWidget(1, QtGui.QFormLayout.FieldRole, self.line_command)
-        self.gridLayout.addLayout(self.layout_addalias, 1, 0, 1, 1)
-        self.line_1 = QtGui.QFrame(self.tab_addalias)
-        self.line_1.setFrameShape(QtGui.QFrame.HLine)
-        self.line_1.setFrameShadow(QtGui.QFrame.Sunken)
-        self.gridLayout.addWidget(self.line_1, 2, 0, 1, 1)
+        self.tab_addalias = AddEditAlias()
 
-        self.lbl_alias.setText("Alias:")
-        self.lbl_command.setText("Command:")
-
-        self.connect(self.buttons_addalias, QtCore.SIGNAL("accepted()"), self.alias_add)
-        self.connect(self.buttons_addalias, QtCore.SIGNAL("rejected()"), QtGui.qApp.quit)
+        self.connect(self.tab_addalias.buttons_addalias, QtCore.SIGNAL("accepted()"), self.alias_add)
+        self.connect(self.tab_addalias.buttons_addalias, QtCore.SIGNAL("rejected()"), QtGui.qApp.quit)
 
     def load_tabalias(self):
         self.tab_alias = QtGui.QWidget()
@@ -154,17 +185,38 @@ class GUI(QtGui.QMainWindow):
             self.list_alias.addItem(alias)
 
     def alias_delete(self):
-        alias = self.list_alias.selectedItems()[0].text().split("=", 1)[0]
-        operations.delete(alias)
-        self.load_list()
+        try:
+            alias = self.list_alias.selectedItems()[0].text().split("=", 1)[0]
+            operations.delete(alias)
+            self.load_list()
+        except IndexError:
+            pass
 
     def alias_edit(self):
-        #TODO: edit aliases with edit dialog(using addalias tab widget)
-        pass
+        try:
+            _alias = self.list_alias.selectedItems()[0].text().split("=", 1)
+            self.window_edit.line_alias.setText(_alias[0])
+            self.window_edit.line_command.setText(_alias[1])
+            self.window_edit.old_alias = _alias[0]
+            self.window_edit.show()
+            self.load_list()
+        except IndexError:
+            pass
+
+    def alias_edit_ok(self):
+        if self.window_edit.old_alias != None:
+            operations.delete(self.window_edit.old_alias)
+            operations.add_alias(self.window_edit.line_alias.text(), self.window_edit.line_command.text())
+            self.window_edit.old_alias = None
+            self.load_list()
+            self.window_edit.hide()
 
     def alias_add(self):
-        operations.add_alias(self.line_alias.text(), self.line_command.text())
-        self.load_list()
+        if operations.add_alias(self.tab_addalias.line_alias.text(), self.tab_addalias.line_command.text()):
+            self.load_list()
+            QtGui.QMessageBox.information(self, SUCCESS, "You have successfully added new alias!")
+        else:
+            QtGui.QMessageBox.warning(self, "Error", ERR_SAME)
 
 def main():
     argv = sys.argv
@@ -212,7 +264,8 @@ def main():
         operations.delete(argv[2])
 
     elif number == 4 and argv[1] == "-add":
-        operations.add_alias(argv[2], argv[3])
+        if not operations.add_alias(argv[2], argv[3]):
+            print ERR_SAME
 
     else:
         print 'wrong usage, try typing --help'
