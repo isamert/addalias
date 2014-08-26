@@ -52,6 +52,8 @@ class Operations:
 
     def aliaslist(self):
         aliases = []
+        if not os.path.isfile(self.bash_file):
+            open(self.bash_file, 'a').close()
         with open(self.bash_file, 'r') as f:
             for line in f.readlines():
                 if line.startswith("alias"):
