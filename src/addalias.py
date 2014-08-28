@@ -52,6 +52,8 @@ class Operations:
 
     def aliaslist(self):
         aliases = []
+        if not os.path.isfile(self.bash_file):
+            open(self.bash_file, 'a').close()
         with open(self.bash_file, 'r') as f:
             for line in f.readlines():
                 if line.startswith("alias"):
@@ -218,8 +220,10 @@ class GUI(QtGui.QMainWindow):
         else:
             QtGui.QMessageBox.warning(self, "Error", ERR_SAME)
 
-def main():
-    argv = sys.argv
+def main(argv):
+    if argv is None:
+        argv = sys.argv
+
     number = len(argv)
 
     if number == 1:
@@ -233,8 +237,8 @@ def main():
             print '\t\tremove alias:    python addalias.py -rm "<title>"'
             print '\t\tlist aliases:    python addalias.py -list'
             print '\t\topen gui:        python addalias.py -gui'
-            print '\t\tinstall:         python addalias.py --install'
-            print '\t\tuninstall:       addalias --uninstall'
+            print '\t\tinstall:         python addalias.py --install (Installs for only this user)'
+            print '\t\tuninstall:       addalias --uninstall         (If you installed with --install command, use this to uninstall)'
             print ""
             print "\t\texample:"
             print '\t\t\tpython addalias.py -add "myalias" "my-real-command"'

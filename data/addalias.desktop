@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Addalias
+Terminal=false
+Exec=addalias -gui
+Icon=addalias
+Type=Application
+Categories==System;Utility;
