@@ -220,7 +220,7 @@ class GUI(QtGui.QMainWindow):
         else:
             QtGui.QMessageBox.warning(self, "Error", ERR_SAME)
 
-def main(argv):
+def main(argv = None):
     if argv is None:
         argv = sys.argv
 
