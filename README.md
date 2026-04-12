@@ -1,3 +1,7 @@
+**DO NOT USE THIS PROGRAM**
+
+I created this back in high school, not really knowing what I was doing. Occasionally, people come across this tool and think it's a good idea - it isn't. This program adds an unnecessary layer of indirection. Aliases are simple one-liners that belong in a single file. Instead of trying to manage them with a GUI that adds no value, learn to use your editor properly and manage your aliases directly.
+
 # Info
 Addalias is a simple tool for adding/editing your alias commands. You can use it with a simple GUI or you can use it with commandline.
 
